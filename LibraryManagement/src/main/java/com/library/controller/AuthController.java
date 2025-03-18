@@ -15,12 +15,11 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final UserService userService;
-    private final AuthenticationManager authenticationManager;
+    
    
 
-    public AuthController(UserService userService, AuthenticationManager authenticationManager) {
+    public AuthController(UserService userService) {
         this.userService = userService;
-        this.authenticationManager = authenticationManager;
        
     }
 

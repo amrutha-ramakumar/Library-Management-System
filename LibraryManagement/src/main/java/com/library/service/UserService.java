@@ -93,4 +93,10 @@ public class UserService {
 
         return userRepository.save(user);
     }
+
+	public Users getUserDetailsFromToken(String email) {
+     
+
+        return userRepository.findByEmail(email);
+    }
 }
