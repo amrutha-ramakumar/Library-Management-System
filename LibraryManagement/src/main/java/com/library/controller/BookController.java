@@ -3,6 +3,11 @@ package com.library.controller;
 import com.library.model.Book;
 import com.library.service.BookService;
 import com.library.config.JwtProvider;
+import com.library.dto.BookDTO;
+
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,11 +25,10 @@ public class BookController {
 
     // Add a new book
     @PostMapping("/add")
-    public ResponseEntity<?> addBook(@RequestHeader("Authorization") String token, @RequestBody Book book) {
+    public ResponseEntity<?> addBook(@RequestHeader("Authorization") String token, @RequestBody BookDTO book) {
         
         // Extract email from token
         String email = jwtProvider.getEmailFromToken(token);
-
         Book newBook = bookService.addBook(email, book);
 
         return ResponseEntity.ok(newBook);
@@ -43,4 +47,15 @@ public class BookController {
 
         return ResponseEntity.ok(book);
     }
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getBookById(@RequestHeader("Authorization") String token,@PathVariable String id) {
+        Optional<Book> book = bookService.getBookById(id);
+        return book.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+    @GetMapping("/list")
+    public ResponseEntity<List<Book>> listBooks(@RequestHeader("Authorization") String token) {
+        List<Book> books = bookService.getAllBooks();
+        return ResponseEntity.ok(books);
+    }
+    
 }

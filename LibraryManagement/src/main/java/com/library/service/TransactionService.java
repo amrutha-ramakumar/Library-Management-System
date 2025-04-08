@@ -5,10 +5,15 @@ import com.library.model.*;
 import com.library.repository.BookRepository;
 import com.library.repository.TransactionRepository;
 import com.library.repository.UserRepository;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.stream.Collectors;
 import java.util.List;
+
 
 @Service
 public class TransactionService {
@@ -26,6 +31,35 @@ public class TransactionService {
     }
 
     // Borrow a book
+//    public Transaction borrowBook(String email, String bookId) {
+//        Users user = userRepository.findByEmail(email);
+//        if (user == null) {
+//            throw new RuntimeException("User not found!");
+//        }
+//
+//        long borrowedCount = transactionRepository.countByUserAndStatus(user, TransactionStatus.BORROWED);
+//        if (borrowedCount >= MAX_BORROW_LIMIT) {
+//            throw new RuntimeException("Borrowing limit reached! You can only borrow " + MAX_BORROW_LIMIT + " books.");
+//        }
+//
+//        Book book = bookRepository.findById(bookId)
+//                .orElseThrow(() -> new RuntimeException("Book not found!"));
+//
+//        if (book.getAvailable() <= 0) {
+//            throw new RuntimeException("No copies available for this book!");
+//        }
+//
+//        book.setAvailable(book.getAvailable() - 1);
+//        bookRepository.save(book);
+//
+//        Transaction transaction = new Transaction();
+//        transaction.setUser(user);
+//        transaction.setBook(book);
+//        transaction.setBorrowDate(LocalDateTime.now());
+//        transaction.setStatus(TransactionStatus.BORROWED);
+//
+//        return transactionRepository.save(transaction);
+//    }
     public Transaction borrowBook(String email, String bookId) {
         Users user = userRepository.findByEmail(email);
         if (user == null) {
@@ -44,6 +78,11 @@ public class TransactionService {
             throw new RuntimeException("No copies available for this book!");
         }
 
+        boolean alreadyBorrowed = transactionRepository.existsByUserAndBookAndStatus(user, book, TransactionStatus.BORROWED);
+        if (alreadyBorrowed) {
+            throw new RuntimeException("You have already borrowed this book. Return it before borrowing again.");
+        }
+
         book.setAvailable(book.getAvailable() - 1);
         bookRepository.save(book);
 
@@ -55,6 +94,7 @@ public class TransactionService {
 
         return transactionRepository.save(transaction);
     }
+
 
     // Return a borrowed book
     public Transaction returnBook(String email, String transactionId) {
@@ -89,4 +129,22 @@ public class TransactionService {
 
         return transactionRepository.findByUserAndStatus(user, TransactionStatus.BORROWED);
     }
+
+    public List<Book> getAvailableBooks() {
+        return bookRepository.findAll()
+                .stream()
+                .filter(book -> book.getAvailable() > 0) // Only books with available copies
+                .collect(Collectors.toList());
+    }
+   
+    
+    public Page<Transaction> getAllTransactions(int page, int size) {
+        return transactionRepository.findAll(PageRequest.of(page, size));
+    }
+
+    public Page<Transaction> searchTransactions(String bookTitle, int page, int size) {
+        return transactionRepository.findByBookTitleContainingIgnoreCase(bookTitle, PageRequest.of(page, size));
+    }
 }
+
+

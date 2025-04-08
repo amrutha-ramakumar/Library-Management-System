@@ -5,12 +5,15 @@ import com.library.config.CustomUserServiceImplementation;
 import com.library.config.JwtProvider;
 import com.library.dto.LoginDTO;
 import com.library.dto.RegisterDTO;
+import com.library.dto.UserDto;
 import com.library.model.Users;
 import com.library.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.Map;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -77,26 +80,38 @@ public class UserService {
 		return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 	}
 
-	public Users updateUser(String email, Users updatedUser) {
-        Users user = userRepository.findByEmail(email);
+	public Users updateUser(String email, UserDto updatedUser) {
+	    Users user = userRepository.findByEmail(email);
 
-        if (user == null) {
-            throw new RuntimeException("User not found");
-        }
+	    if (user == null) {
+	        throw new RuntimeException("User not found");
+	    }
 
-        user.setName(updatedUser.getName());
-        user.setPhone(updatedUser.getPhone());
+	    if (updatedUser.getName() != null) {
+	        user.setName(updatedUser.getName());
+	    }
+	    
+	    if (updatedUser.getPhone() != null) {
+	        user.setPhone(updatedUser.getPhone());
+	    }
+	    user.setEmail(user.getEmail());
+	    user.setPassword(user.getPassword());
+	    user.setRole(user.getRole());
+	   
 
-        if (updatedUser.getPassword() != null && !updatedUser.getPassword().isEmpty()) {
-            user.setPassword(passwordEncoder.encode(updatedUser.getPassword()));
-        }
+	    return userRepository.save(user);
+	}
 
-        return userRepository.save(user);
-    }
 
 	public Users getUserDetailsFromToken(String email) {
      
 
         return userRepository.findByEmail(email);
     }
+
+
+	public Page<Users> findByRole(Pageable pageable) {
+		
+		return userRepository.findByRole("USER", pageable);
+	}
 }
